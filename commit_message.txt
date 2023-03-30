@@ -1,4 +1,5 @@
-Initial: List devices
+Listing all Interfaces and endpoints
+
 
 
 
