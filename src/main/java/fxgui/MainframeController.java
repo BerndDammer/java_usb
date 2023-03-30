@@ -55,17 +55,7 @@ public class MainframeController extends GridPane {
 	private TreeItem<String> getHubItem(UsbHub hub) {
 		TreeItem<String> result = new TreeItem<>("Hub: " + hub.toString());
 		ObservableList<TreeItem<String>> c = result.getChildren();
-		// Dump information about the device itself
-//		final UsbPort port = hub.getParentUsbPort();
-//        if (port != null)
-//        {
-//            c.add(new TreeItem<String>("Connected to port: " + port.getPortNumber()));
-//            c.add(new TreeItem<String>("Parent: " + port.getUsbHub()));
-//        }
-
-		// Dump device descriptor
-		// c.add(new TreeItem<String>(rootHub.getUsbDeviceDescriptor().toString()));
-//		c.add(new TreeItem<String>(hub.getProductString()));
+		@SuppressWarnings("unchecked")
 		List<UsbDevice> devices = (List<UsbDevice>) hub.getAttachedUsbDevices();
 		for (UsbDevice ud : devices) {
 			if (ud.isUsbHub()) {
@@ -102,24 +92,42 @@ public class MainframeController extends GridPane {
 	}
 
 	private static TreeItem<String> getConfigurationItem(UsbConfiguration configuration) {
-		final TreeItem<String> result = new TreeItem<>("Configuration: " + configuration.toString());
+		final TreeItem<String> result = new TreeItem<>("Multi Configuration: " + configuration.toString());
 		final ObservableList<TreeItem<String>> c = result.getChildren();
+
+		@SuppressWarnings("unchecked")
+		final List<UsbInterface> interfaces = (List<UsbInterface>) configuration.getUsbInterfaces();
+
+		for (UsbInterface interfacce : interfaces) {
+			c.add(getInterfaceItem(interfacce, false));
+		}
 		return result;
 	}
 
 	private static TreeItem<String> getInterfaceItem(UsbInterface interfacce, boolean isAlternate) {
-		final TreeItem<String> result = new TreeItem<>("Interface: " + interfacce.toString());
+		final String headline = //
+				(isAlternate ? "Alt Interface :  " : "Interface: ") //
+						+ interfacce.toString();
+		final TreeItem<String> result = new TreeItem<>(headline);
 		final ObservableList<TreeItem<String>> c = result.getChildren();
-		
-		c.add(new TreeItem<String>( interfacce.getUsbInterfaceDescriptor().toString()));
-		
-		if (interfacce.getNumSettings() != 1) {
+
+		c.add(new TreeItem<String>(interfacce.getUsbInterfaceDescriptor().toString()));
+
+		if ((interfacce.getNumSettings() != 1) && !isAlternate) {
 			c.add(new TreeItem<String>("Num Settings :  " + interfacce.getNumSettings()));
+			@SuppressWarnings("unchecked")
+			final List<UsbInterface> settings = (List<UsbInterface>) interfacce.getSettings();
+			for (UsbInterface setting : settings) {
+				c.add(getInterfaceItem(setting, true));
+			}
 		}
-		@SuppressWarnings(value = "unchecked")
-		final List<UsbEndpoint> endpoints = (List<UsbEndpoint>) interfacce.getUsbEndpoints();
-		for (UsbEndpoint endpoint : endpoints) {
-			c.add(getEndpointItem(endpoint));
+		else
+		{
+			@SuppressWarnings(value = "unchecked")
+			final List<UsbEndpoint> endpoints = (List<UsbEndpoint>) interfacce.getUsbEndpoints();
+			for (UsbEndpoint endpoint : endpoints) {
+				c.add(getEndpointItem(endpoint));
+			}
 		}
 		return result;
 	}
@@ -127,7 +135,7 @@ public class MainframeController extends GridPane {
 	private static TreeItem<String> getEndpointItem(UsbEndpoint endpoint) {
 		final TreeItem<String> result = new TreeItem<>("Endpoint: " + endpoint.toString());
 		final ObservableList<TreeItem<String>> c = result.getChildren();
-		c.add( new TreeItem<String>( endpoint.getUsbEndpointDescriptor().toString() ));
+		c.add(new TreeItem<String>(endpoint.getUsbEndpointDescriptor().toString()));
 		return result;
 	}
 
@@ -154,8 +162,7 @@ public class MainframeController extends GridPane {
 		for (int i = 0; i < 1; i++) {
 			getRowConstraints().add(r);
 		}
-		setBorder(new Border(new BorderStroke(Color.DARKGRAY,
-				  BorderStrokeStyle.SOLID,
-				  CornerRadii.EMPTY, new BorderWidths(3.0))));
+		setBorder(new Border(
+				new BorderStroke(Color.DARKGRAY, BorderStrokeStyle.SOLID, CornerRadii.EMPTY, new BorderWidths(3.0))));
 	}
 }
